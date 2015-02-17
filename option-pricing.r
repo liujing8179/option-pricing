@@ -1,14 +1,25 @@
-priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',steps=8,DY=0.0263)
+priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',method='crr',steps=8,DY=0.0263)
 {
   stockTree <- matrix(0,steps+1,steps+1)
   callTree <- matrix(0,steps+1,steps+1)
   putTree <- matrix(0,steps+1,steps+1)
   
   stepSize <- expT/(12*steps)
-  sizeUp <- exp(vol*sqrt(stepSize))
-  sizeDown <- 1/sizeUp
-  pU <- (exp((rfr-DY)*stepSize)-sizeDown)/(sizeUp-sizeDown)
-  pD <- 1-pU
+  if(method=='crr')
+  {
+    sizeUp <- exp(vol*sqrt(stepSize))
+    sizeDown <- 1/sizeUp
+    pU <- (exp((rfr-DY)*stepSize)-sizeDown)/(sizeUp-sizeDown)
+    pD <- 1-pU
+  }
+  else if(method=='jr')
+  {
+    sizeUp <- exp((rfr-0.5*(vol^2))*stepSize+vol*sqrt(stepSize))
+    sizeDown <- exp((rfr-0.5*(vol^2))*stepSize-vol*sqrt(stepSize))
+    pU <- 0.5
+    pD <- 0.5
+  }
+  
   
   stockTree[1,1] <- s0
   
@@ -51,5 +62,5 @@ priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',step
   
   
   
-  list(callPrice = callTree[1,1],putPrice = putTree[1,1],callTree = callTree,putTree=putTree)
+  list(callPrice = signif(callTree[1,1],3),putPrice = signif(putTree[1,1],3),callTree = round(callTree,3),putTree=round(putTree,3))
 }
