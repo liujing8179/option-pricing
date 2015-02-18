@@ -1,9 +1,11 @@
 priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',method='crr',steps=8,DY=0.0263)
 {
+  #declare variables
   stockTree <- matrix(0,steps+1,steps+1)
   callTree <- matrix(0,steps+1,steps+1)
   putTree <- matrix(0,steps+1,steps+1)
   
+  # define size of movements and probabilities
   stepSize <- expT/(12*steps)
   if(method=='crr')
   {
@@ -20,9 +22,8 @@ priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',meth
     pD <- 0.5
   }
   
-  
-  stockTree[1,1] <- s0
-  
+  # create tree of stock prices
+  stockTree[1,1] <- s0  
   bot <- 2
   for(n in 2:(steps+1))
   {
@@ -34,6 +35,7 @@ priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',meth
     bot <- bot + 1
   }
   
+  # create tree of option prices
   for(i in 1:(steps+1))
   {
     callTree[i,steps+1] <- max(0,stockTree[i,steps+1]-strike)
@@ -61,6 +63,21 @@ priceOption <- function(expT=6,s0=30.00,strike=30,rfr=0.1,vol=0.2,type='eu',meth
   }
   
   
+  tiy <- expT/12
+  #BlackSholes 
+  d1 <- (log(s0/strike)+(rfr+0.5*(vol*vol))*tiy)/(vol*sqrt(tiy))
+  d2 <- d1-(vol*sqrt(tiy))
+  Call <-s0*pnorm(d1)-strike*exp(-rfr*tiy)*pnorm(d2)
+  Put <- -1*s0*pnorm(-d1)+strike*exp(-rfr*tiy)*pnorm(-d2)
+ 
+  #Merton 
+  d1M <- (log(s0/strike)+(rfr-DY+0.5*(vol*vol))*tiy)/(vol*sqrt(tiy))
+  d2M <- d1M-(vol*sqrt(tiy))
+  CallM <- exp(-DY*tiy)*s0*pnorm(d1M)-strike*exp(-rfr*tiy)*pnorm(d2M)
+  PutM <- -exp(-DY*tiy)*s0*pnorm(-d1M)+strike*exp(-rfr*tiy)*pnorm(-d2M)
   
-  list(callPrice = signif(callTree[1,1],3),putPrice = signif(putTree[1,1],3),callTree = round(callTree,3),putTree=round(putTree,3))
+  # output
+  list(callPrice = signif(callTree[1,1],4),putPrice = signif(putTree[1,1],4),
+       bsCall=signif(Call,4),bsPut=signif(Put,4),bsmCall=signif(CallM,4),bsmPut=signif(PutM,4),
+       callTree = round(callTree,3),putTree=round(putTree,3))
 }
